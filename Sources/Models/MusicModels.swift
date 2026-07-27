@@ -4,6 +4,62 @@ import Foundation
 enum EditorMode: Equatable {
     case editing
     case playback
+    case intermission
+}
+
+/// CueCard内の役割。
+enum TrackRole: String, CaseIterable, Identifiable, Codable {
+    case cue
+    case player
+
+    var id: Self { self }
+
+    var shortLabel: String {
+        switch self {
+        case .cue: "CUE"
+        case .player: "YOU"
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .cue: "合図パート"
+        case .player: "自分のパート"
+        }
+    }
+}
+
+/// 練習時にどのパートを鳴らすか。
+enum RehearsalMode: String, CaseIterable, Identifiable, Codable {
+    case together
+    case cueOnly
+    case rehearse
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .together: "Together"
+        case .cueOnly: "Cue Only"
+        case .rehearse: "Rehearse"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .together: "重なりを確認"
+        case .cueOnly: "合図だけ聴く"
+        case .rehearse: "自分で入る"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .together: "person.2.wave.2"
+        case .cueOnly: "ear"
+        case .rehearse: "music.mic"
+        }
+    }
 }
 
 /// MVPで扱う音価。
@@ -105,7 +161,6 @@ struct Pitch: Hashable, Codable {
     let letter: PitchLetter
     let octave: Int
 
-    /// ヘ音記号の下第2線相当から上の加線までを扱う。
     /// staffOffset = 0 はヘ音記号の最下線 G2。
     init(staffOffset: Int) {
         let baseDiatonicNumber = 2 * 7 + PitchLetter.g.rawValue
@@ -172,5 +227,57 @@ struct NoteEvent: Identifiable, Hashable, Codable {
 
     var endBeat: Double {
         startBeat + effectiveBeats
+    }
+}
+
+/// Cueと自分のパートを対にした練習単位。
+struct CueCard: Identifiable, Hashable, Codable {
+    let id: UUID
+    var title: String
+    var cueInstrumentName: String
+    var playerInstrumentName: String
+    var bpm: Double
+    var measureBeats: Double
+    var cueEvents: [NoteEvent]
+    var playerEvents: [NoteEvent]
+
+    init(
+        id: UUID = UUID(),
+        title: String,
+        cueInstrumentName: String,
+        playerInstrumentName: String,
+        bpm: Double = 72,
+        measureBeats: Double = 4,
+        cueEvents: [NoteEvent] = [],
+        playerEvents: [NoteEvent] = []
+    ) {
+        self.id = id
+        self.title = title
+        self.cueInstrumentName = cueInstrumentName
+        self.playerInstrumentName = playerInstrumentName
+        self.bpm = bpm
+        self.measureBeats = measureBeats
+        self.cueEvents = cueEvents
+        self.playerEvents = playerEvents
+    }
+}
+
+/// 将来のマイク判定で保存する1回分の試行。
+struct PracticeAttempt: Identifiable, Hashable, Codable {
+    let id: UUID
+    let createdAt: Date
+    let rehearsalMode: RehearsalMode
+    let timingOffsetMilliseconds: Double?
+
+    init(
+        id: UUID = UUID(),
+        createdAt: Date = Date(),
+        rehearsalMode: RehearsalMode,
+        timingOffsetMilliseconds: Double? = nil
+    ) {
+        self.id = id
+        self.createdAt = createdAt
+        self.rehearsalMode = rehearsalMode
+        self.timingOffsetMilliseconds = timingOffsetMilliseconds
     }
 }
