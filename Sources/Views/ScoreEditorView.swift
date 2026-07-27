@@ -13,15 +13,37 @@ struct ScoreEditorView: View {
                     EditorHeaderView(viewModel: viewModel)
                         .frame(height: headerHeight(for: proxy.size))
 
-                    StaffView(
-                        events: viewModel.events,
-                        currentBeat: viewModel.currentBeat,
+                    TrackStaffRow(
+                        role: .cue,
+                        instrumentName: viewModel.cueInstrumentName,
+                        events: viewModel.cueEvents,
+                        currentBeat: viewModel.cueCurrentBeat,
                         measureBeats: viewModel.measureBeats,
                         playbackBeat: nil,
                         activeEventID: nil,
-                        isInteractive: !viewModel.isMeasureComplete,
+                        isSelected: viewModel.selectedTrack == .cue,
+                        isInteractive: !viewModel.isTrackComplete(.cue),
+                        onSelect: { viewModel.selectTrack(.cue) },
                         onPitchTapped: { pitch in
-                            viewModel.addNote(pitch: pitch)
+                            viewModel.addNote(pitch: pitch, to: .cue)
+                        }
+                    )
+
+                    Divider()
+
+                    TrackStaffRow(
+                        role: .player,
+                        instrumentName: viewModel.playerInstrumentName,
+                        events: viewModel.playerEvents,
+                        currentBeat: viewModel.playerCurrentBeat,
+                        measureBeats: viewModel.measureBeats,
+                        playbackBeat: nil,
+                        activeEventID: nil,
+                        isSelected: viewModel.selectedTrack == .player,
+                        isInteractive: !viewModel.isTrackComplete(.player),
+                        onSelect: { viewModel.selectTrack(.player) },
+                        onPitchTapped: { pitch in
+                            viewModel.addNote(pitch: pitch, to: .player)
                         }
                     )
                 }
@@ -34,14 +56,14 @@ struct ScoreEditorView: View {
     }
 
     private func sideWidth(for size: CGSize) -> CGFloat {
-        min(max(size.width * 0.105, 82), 112)
+        min(max(size.width * 0.095, 78), 104)
     }
 
     private func modifierWidth(for size: CGSize) -> CGFloat {
-        min(max(size.width * 0.125, 104), 136)
+        min(max(size.width * 0.125, 108), 138)
     }
 
     private func headerHeight(for size: CGSize) -> CGFloat {
-        min(max(size.height * 0.18, 58), 78)
+        min(max(size.height * 0.16, 54), 70)
     }
 }
