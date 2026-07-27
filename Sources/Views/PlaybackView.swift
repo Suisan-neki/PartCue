@@ -42,6 +42,9 @@ struct PlaybackView: View {
             }
             .overlay(alignment: .bottom) {
                 VStack(spacing: 8) {
+                    if viewModel.detailedFeedbackUnlocked {
+                        detailedFeedbackBadge
+                    }
                     if viewModel.shouldOfferIntermission {
                         intermissionPrompt
                     }
@@ -82,6 +85,18 @@ struct PlaybackView: View {
                 .buttonStyle(.plain)
             }
         }
+    }
+
+    private var detailedFeedbackBadge: some View {
+        Label(
+            "詳細フィードバック解放済み — マイク判定は次の実装",
+            systemImage: "waveform.path.ecg"
+        )
+        .font(.caption.weight(.bold))
+        .padding(.horizontal, 13)
+        .padding(.vertical, 7)
+        .foregroundStyle(Color.accentColor)
+        .background(.ultraThinMaterial, in: Capsule())
     }
 
     private var intermissionPrompt: some View {
