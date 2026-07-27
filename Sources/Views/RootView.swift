@@ -16,6 +16,9 @@ struct RootView: View {
                     case .playback:
                         PlaybackView(viewModel: viewModel)
                             .transition(.opacity.combined(with: .scale(scale: 1.015)))
+                    case .intermission:
+                        IntermissionView(viewModel: viewModel)
+                            .transition(.opacity.combined(with: .scale(scale: 0.98)))
                     }
                 }
             }

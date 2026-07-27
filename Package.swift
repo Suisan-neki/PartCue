@@ -14,8 +14,8 @@ let package = Package(
             name: "PartCue",
             targets: ["AppModule"],
             bundleIdentifier: "dev.suisan.partcue",
-            displayVersion: "0.1.0",
-            bundleVersion: "1",
+            displayVersion: "0.2.0",
+            bundleVersion: "2",
             appIcon: .placeholder(icon: .note),
             accentColor: .presetColor(.indigo),
             supportedDeviceFamilies: [
