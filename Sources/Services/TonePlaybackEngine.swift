@@ -1,8 +1,13 @@
 import AVFAudio
 import Foundation
 
-/// 外部音源なしで動く、MVP用の簡易トーン再生エンジン。
-/// 1小節分のPCMバッファを生成し、AVAudioPlayerNodeで再生する。
+struct TonePlaybackTrack {
+    let role: TrackRole
+    let events: [NoteEvent]
+}
+
+/// 外部音源なしで動く、MVP用の簡易アンサンブル再生エンジン。
+/// CueとYouを同じPCMバッファへ描画し、サンプル単位で同期させる。
 final class TonePlaybackEngine {
     enum PlaybackError: LocalizedError {
         case bufferCreationFailed
@@ -31,7 +36,7 @@ final class TonePlaybackEngine {
 
     @discardableResult
     func play(
-        events: [NoteEvent],
+        tracks: [TonePlaybackTrack],
         bpm: Double,
         measureBeats: Double,
         completion: @escaping () -> Void
@@ -64,15 +69,18 @@ final class TonePlaybackEngine {
             channels[channelIndex].update(repeating: 0, count: Int(frameCount))
         }
 
-        for event in events where !event.isRest {
-            guard let pitch = event.pitch else { continue }
-            render(
-                event: event,
-                pitch: pitch,
-                secondsPerBeat: secondsPerBeat,
-                into: channels,
-                frameCount: Int(frameCount)
-            )
+        for track in tracks {
+            for event in track.events where !event.isRest {
+                guard let pitch = event.pitch else { continue }
+                render(
+                    event: event,
+                    pitch: pitch,
+                    role: track.role,
+                    secondsPerBeat: secondsPerBeat,
+                    into: channels,
+                    frameCount: Int(frameCount)
+                )
+            }
         }
 
         player.scheduleBuffer(buffer, at: nil, options: []) {
@@ -98,6 +106,7 @@ final class TonePlaybackEngine {
     private func render(
         event: NoteEvent,
         pitch: Pitch,
+        role: TrackRole,
         secondsPerBeat: Double,
         into channels: UnsafePointer<UnsafeMutablePointer<Float>>,
         frameCount: Int
@@ -114,7 +123,8 @@ final class TonePlaybackEngine {
 
         let attackSeconds = min(0.012, soundingDuration * 0.15)
         let releaseSeconds = min(0.045, soundingDuration * 0.22)
-        let amplitude = 0.20
+        let amplitude = 0.15
+        let channelGains = gains(for: role)
 
         for frame in startFrame..<endFrame {
             let localTime = Double(frame - startFrame) / sampleRate
@@ -125,12 +135,26 @@ final class TonePlaybackEngine {
             let envelope = max(0.0, min(attackEnvelope, releaseEnvelope))
 
             let fundamental = sin(2.0 * .pi * frequency * localTime)
-            let secondHarmonic = 0.16 * sin(2.0 * .pi * frequency * 2.0 * localTime)
-            let sample = Float((fundamental + secondHarmonic) / 1.16 * amplitude * envelope)
-
-            for channelIndex in 0..<Int(format.channelCount) {
-                channels[channelIndex][frame] += sample
+            let overtone: Double
+            switch role {
+            case .cue:
+                overtone = 0.12 * sin(2.0 * .pi * frequency * 3.0 * localTime)
+            case .player:
+                overtone = 0.18 * sin(2.0 * .pi * frequency * 2.0 * localTime)
             }
+
+            let sample = Float((fundamental + overtone) / 1.18 * amplitude * envelope)
+            channels[0][frame] += sample * channelGains.left
+            channels[1][frame] += sample * channelGains.right
+        }
+    }
+
+    private func gains(for role: TrackRole) -> (left: Float, right: Float) {
+        switch role {
+        case .cue:
+            (left: 1.0, right: 0.58)
+        case .player:
+            (left: 0.58, right: 1.0)
         }
     }
 }
