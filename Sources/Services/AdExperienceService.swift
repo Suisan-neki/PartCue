@@ -11,7 +11,7 @@ enum AdExperiencePolicy {
     static let requiresExplicitOptIn = true
 
     /// 編集中・再生中・結果表示直後には広告を出さない。
-    static let blocksActivePractice = false
+    static let allowsAdsDuringActivePractice = false
 }
 
 /// RevenueCat Adsと広告SDKをUIから切り離すための境界。
