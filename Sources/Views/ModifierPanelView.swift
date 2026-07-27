@@ -8,6 +8,8 @@ struct ModifierPanelView: View {
             actionButton(title: "休符", systemImage: "pause.fill") {
                 viewModel.addRest()
             }
+            .disabled(viewModel.isSelectedTrackComplete)
+            .opacity(viewModel.isSelectedTrackComplete ? 0.38 : 1)
 
             Divider()
 
@@ -30,16 +32,16 @@ struct ModifierPanelView: View {
             actionButton(title: "戻る", systemImage: "arrow.uturn.backward") {
                 viewModel.undo()
             }
-            .disabled(viewModel.events.isEmpty)
-            .opacity(viewModel.events.isEmpty ? 0.38 : 1)
+            .disabled(!viewModel.selectedTrackHasEvents)
+            .opacity(viewModel.selectedTrackHasEvents ? 1 : 0.38)
 
             Divider()
 
-            actionButton(title: "再生", systemImage: "play.fill", prominent: true) {
-                viewModel.enterPlayback()
+            actionButton(title: "練習", systemImage: "play.fill", prominent: true) {
+                viewModel.enterPlayback(mode: .together)
             }
-            .disabled(viewModel.events.isEmpty)
-            .opacity(viewModel.events.isEmpty ? 0.38 : 1)
+            .disabled(!viewModel.canStartRehearsal)
+            .opacity(viewModel.canStartRehearsal ? 1 : 0.38)
         }
         .background(Color(uiColor: .secondarySystemBackground))
         .overlay(alignment: .leading) {
